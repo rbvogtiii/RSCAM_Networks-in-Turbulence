@@ -1,42 +1,49 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-def get_triads(dk=1,kmax=2,kmin=0):
-    if int(kmax/dk)!=kmax/dk:
-        print('kmax must divide evenly by dk')
-        return
+dk=0.5;kmax=30;kmin=6
+n=int(kmax/dk)*2+1
+idk=dk*(np.array(np.where(np.zeros([n]*2)==0))-(kmax/dk)).astype(int)
+order=lambda x: ((x[0]+kmax)/dk)*n+((x[1]+kmax)/dk)
+kmaxx=kmax**2
+kminn=kmin**2
 
-    n=int(kmax/dk)*2+1
-    A=np.zeros([n]*4)
-    idx=dk*(np.array(np.where(A==0))-(kmax/dk)).astype(int)
+k=[];p=[];q=[]
 
-    tmp1=((-idx[0]-idx[2])**2+(-idx[1]-idx[3])**2<=kmax**2) & (idx[0]**2+idx[1]**2<=kmax**2) & (idx[2]**2+idx[3]**2<=kmax**2) & ~((idx[0]==idx[2])&(idx[1]==idx[3]))
-    tmp2=((-idx[0]-idx[2])**2+(-idx[1]-idx[3])**2>=kmin**2) & (idx[0]**2+idx[1]**2>=kmin**2) & (idx[2]**2+idx[3]**2>=kmin**2)
-    triads=idx[:,tmp1&tmp2]
+for i in range(len(idk.T)):
+    tmp1=(np.linalg.norm(idk.T[i].reshape(2,1),axis=0)**2<=kmaxx) & (np.linalg.norm(idk,axis=0)**2<=kmaxx) & (np.linalg.norm(-idk-idk.T[i].reshape(2,1),axis=0)**2<=kmaxx)
+    tmp2=(np.linalg.norm(idk.T[i].reshape(2,1),axis=0)**2>=kminn) & (np.linalg.norm(idk,axis=0)**2>=kminn) & (np.linalg.norm(-idk-idk.T[i].reshape(2,1),axis=0)**2>=kminn)
+    tmp3=(order(idk.T[i])<order(idk)) & (order(idk)<order(-idk-idk.T[i].reshape(2,1)))
+    if (tmp1&tmp2&tmp3).sum()!=0:
+        k.append(np.array([idk.T[i]]*(tmp1&tmp2&tmp3).sum()))
+        tmp=idk.T[tmp1&tmp2&tmp3]
+        p.append(tmp)
+        q.append(-tmp-idk.T[i])
 
-    k=triads[[0,1]]
-    p=triads[[2,3]]
-    q=-triads[[0,1]]-triads[[2,3]]
+k=np.row_stack(k).T;p=np.row_stack(p).T;q=np.row_stack(q).T
+A=np.zeros([len(idk.T)]*2);G=np.zeros([len(idk.T)]*2)
+A[order(k).astype(int),order(p).astype(int)]=1
+G[order(k).astype(int),order(p).astype(int)]=(np.linalg.norm(k,axis=0)**2)*np.cross(q,p,axis=0)
 
-    order=lambda x: ((x[0]+kmax/dk)*n+(x[1]+kmax/dk))
-
-    idx=(order(k)<=order(p))&(order(p)<=order(q))
-    k=k[:,idx];p=p[:,idx];q=q[:,idx]
-
-    return k,p,q
-
-dk=0.5;kmax=30;kmin=6;
-k,p,q=get_triads(dk=dk,kmax=kmax,kmin=kmin)
 print('done!')
 
-n=int(kmax/dk)*2+1
 conn=np.zeros([n]*2)
-
 counts=np.unique(np.column_stack((k,p,q)),axis=1,return_counts=True)
 tmp=((counts[0]+kmax)/dk).round().astype(int)
 conn[tmp[0],tmp[1]]=counts[1]
 
 fig,ax=plt.subplots(layout='constrained')
+im=ax.imshow(conn,extent=[-kmax,kmax,-kmax,kmax],origin='lower',cmap='plasma')
+plt.colorbar(im)
+plt.savefig('./img/heatmap.png',dpi=300,bbox_inches='tight')
+plt.show()
+
+conn=np.zeros([n]*2)
+tmp=((idk+kmax)/dk).round().astype(int)
+conn[tmp[0],tmp[1]]=G.sum(axis=1)
+
+fig,ax=plt.subplots(layout='constrained')
 im=ax.imshow(conn,extent=[-kmax,kmax,-kmax,kmax],origin='lower')
 plt.colorbar(im)
+plt.savefig('./img/heatmap2.png',dpi=300,bbox_inches='tight')
 plt.show()
