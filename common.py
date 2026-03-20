@@ -64,8 +64,6 @@ def get_G(return_triads=False,return_all_G=False,kmax=30,kmin=6,rho=lambda x:x**
         Grho[order(k),order(p)]=np.cross(q,p,axis=0)*rho_term*dot_term
         Gcos=np.zeros([len(idk.T)]*2)
         Gcos[order(k),order(p)]=np.cross(q,p,axis=0)*cos_term*dot_term
-        Gcosrho=np.zeros([len(idk.T)]*2)
-        Gcosrho[order(k),order(p)]=np.cross(q,p,axis=0)*cos_term*rho_term*dot_term
         Gs_dir=[G,Grho,Gcos,Gcosrho_dir]
         return k,p,q,kmag,pmag,qmag,Gs,Gs_dir
 
