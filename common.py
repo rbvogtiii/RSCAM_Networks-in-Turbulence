@@ -42,7 +42,7 @@ def get_G(return_triads=False,return_all_G=False,kmax=30,kmin=6,rho=lambda x:x**
     dot_term=(k*p).sum(axis=0)
     rho_term=rhok*rhop*rhoq
     cos_term=-C/(2*D)
-    term=pmag**2-qmag**2
+    term=qmag**2-pmag**2
 
     Gcosrho=np.zeros([len(idk.T)]*2)
     Gcosrho[order(k),order(p)]=term*np.cross(q,p,axis=0)*cos_term*rho_term
